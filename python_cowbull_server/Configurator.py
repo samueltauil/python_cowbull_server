@@ -23,7 +23,7 @@ class Configurator(object):
                 "name": "PERSISTER",
                 "description": "The persistence engine object",
                 "required": False,
-                "default": '{"engine_name": "redis", "parameters": {"host": "localhost", "port": 6379, "db": 0}}',
+                "default": '{"engine_name": "redis", "parameters": {"host": "redis-master", "port": 6379, "db": 0}}',
                 "caster": PersistenceEngine
             },
             {
