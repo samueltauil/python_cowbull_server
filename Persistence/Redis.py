@@ -7,7 +7,7 @@ import redis
 class Persister(AbstractPersister):
     _redis_connection = None
 
-    def __init__(self, host="localhost", port=6379, master_port=26379, db=0):
+    def __init__(self, host="redis-master", port=6379, master_port=26379, db=0):
         super(Persister, self).__init__()
 
         self.handler.module="Redis Persister"
