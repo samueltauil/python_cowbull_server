@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: cowbull
-        image: dsanderscan/cowbull:latest
+        image: samueltauil/cowbull:latest
         env:
         - name: "PERSISTENCE_ENGINE"
           value: "redis"
