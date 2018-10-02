@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
       - name: cowbull
-        image: dsanderscan/cowbull:latest
+        image: samueltauil/cowbull:latest
         resources:
           requests:
             cpu: '0.1'
