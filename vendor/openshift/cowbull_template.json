@@ -1,0 +1,427 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "cowbull_template",
+    },
+    "objects": [
+      {
+        "apiVersion": "v1",
+        "data": {
+          "cowbull.cfg": "{ \n    \"LOGGING_FORMAT\": \"%(asctime)s %(levelname)s: %(message)s\", \n    \"LOGGING_LEVEL\": 10, \n    \"TEST_VALUE\": \"Hello David!\", \n    \"SAAS_REDIS_HOST\": \"redis-11039.c8.us-east-1-2.ec2.cloud.redislabs.com\", \n    \"SAAS_REDIS_PORT\": 11039, \n    \"SAAS_REDIS_DB\": 0, \n    \"REDIS_HOST\": \"redis-master\", \n    \"REDIS_PORT\": 6379, \n    \"REDIS_DB\": 0, \n    \"FLASK_HOST\": \"localhost\", \n    \"FLASK_PORT\": \"5000\", \n    \"FLASK_DEBUG\": \"false\", \n    \"GAME_VERSION\": \"v0_1\" \n}\n"
+        },
+       "kind": "ConfigMap",
+       "metadata": {
+       "name": "cowbull-config",
+      }
+    },
+      {
+            "kind": "Deployment",
+            "apiVersion": "apps/v1",
+            "metadata": {
+                "name": "cowbull-dep",
+                "generation": 3,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "cowbull",
+                    "run": "cowbull",
+                    "tier": "frontend"
+                },
+                "annotations": {
+                    "deployment.kubernetes.io/revision": "2"
+                }
+            },
+            "spec": {
+                "replicas": 1,
+                "selector": {
+                    "matchLabels": {
+                        "app": "cowbull",
+                        "run": "cowbull",
+                        "tier": "frontend"
+                    }
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "cowbull",
+                            "run": "cowbull",
+                            "tier": "frontend"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "config-volume",
+                                "configMap": {
+                                    "name": "cowbull-config",
+                                    "items": [
+                                        {
+                                            "key": "cowbull.cfg",
+                                            "path": "cowbull.cfg"
+                                        }
+                                    ],
+                                    "defaultMode": 420
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "cowbull",
+                                "image": "samueltauil/cowbull:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "PERSISTENCE_ENGINE",
+                                        "value": "redis"
+                                    },
+                                    {
+                                        "name": "REDIS_HOST",
+                                        "value": "redis-master"
+                                    },
+                                    {
+                                        "name": "LOGGING_LEVEL",
+                                        "value": "10"
+                                    },
+                                    {
+                                        "name": "COWBULL_CONFIG",
+                                        "value": "/cowbull/config/cowbull.cfg"
+                                    }
+                                ],
+                                "resources": {
+                                    "requests": {
+                                        "cpu": "100m",
+                                        "memory": "40Mi"
+                                    }
+                                },
+                                "volumeMounts": [
+                                    {
+                                        "name": "config-volume",
+                                        "mountPath": "/cowbull/config/"
+                                    }
+                                ],
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "imagePullPolicy": "Always"
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {},
+                        "schedulerName": "default-scheduler"
+                    }
+                },
+                "strategy": {
+                    "type": "RollingUpdate",
+                    "rollingUpdate": {
+                        "maxUnavailable": 1,
+                        "maxSurge": 1
+                    }
+                },
+                "revisionHistoryLimit": 10,
+                "progressDeadlineSeconds": 600
+            },
+            "status": {
+            }
+        },
+        {
+            "kind": "Deployment",
+            "apiVersion": "apps/v1",
+            "metadata": {
+                "name": "redis-master",
+                "generation": 1,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "redis",
+                    "role": "master",
+                    "tier": "backend"
+                },
+                "annotations": {
+                    "deployment.kubernetes.io/revision": "1"
+                }
+            },
+            "spec": {
+                "replicas": 1,
+                "selector": {
+                    "matchLabels": {
+                        "app": "redis",
+                        "role": "master",
+                        "tier": "backend"
+                    }
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "redis",
+                            "role": "master",
+                            "tier": "backend"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "name": "redis-master",
+                                "image": "redis:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 6379,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {
+                                    "requests": {
+                                        "cpu": "100m",
+                                        "memory": "100Mi"
+                                    }
+                                },
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "imagePullPolicy": "Always"
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {},
+                        "schedulerName": "default-scheduler"
+                    }
+                },
+                "strategy": {
+                    "type": "RollingUpdate",
+                    "rollingUpdate": {
+                        "maxUnavailable": 1,
+                        "maxSurge": 1
+                    }
+                },
+                "revisionHistoryLimit": 10,
+                "progressDeadlineSeconds": 600
+            },
+            "status": {
+            }
+        },
+        {
+            "kind": "Deployment",
+            "apiVersion": "apps/v1",
+            "metadata": {
+                "name": "webapp",
+                "generation": 2,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "webapp",
+                    "run": "webapp",
+                    "tier": "webappFrontend"
+                },
+                "annotations": {
+                    "deployment.kubernetes.io/revision": "1"
+                }
+            },
+            "spec": {
+                "replicas": 1,
+                "selector": {
+                    "matchLabels": {
+                        "app": "webapp",
+                        "run": "webapp",
+                        "tier": "webappFrontend"
+                    }
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "webapp",
+                            "run": "webapp",
+                            "tier": "webappFrontend"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "name": "webapp",
+                                "image": "dsanderscan/cowbull_webapp:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "LOGGING_LEVEL",
+                                        "value": "10"
+                                    },
+                                    {
+                                        "name": "COWBULL_SERVER",
+                                        "value": "cowbull-svc"
+                                    },
+                                    {
+                                        "name": "COWBULL_PORT",
+                                        "value": "8080"
+                                    }
+                                ],
+                                "resources": {
+                                    "requests": {
+                                        "cpu": "100m",
+                                        "memory": "40Mi"
+                                    }
+                                },
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "imagePullPolicy": "Always"
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {},
+                        "schedulerName": "default-scheduler"
+                    }
+                },
+                "strategy": {
+                    "type": "RollingUpdate",
+                    "rollingUpdate": {
+                        "maxUnavailable": 1,
+                        "maxSurge": 1
+                    }
+                },
+                "revisionHistoryLimit": 10,
+                "progressDeadlineSeconds": 600
+            },
+            "status": {
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "webapp-svc",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "webapp",
+                    "run": "webapp",
+                    "tier": "webappFrontend"
+                },
+                "annotations": {
+                    "openshift.io/host.generated": "true"
+                }
+            },
+            "spec": {
+                "to": {
+                    "kind": "Service",
+                    "name": "webapp-svc",
+                    "weight": 100
+                },
+                "port": {
+                    "targetPort": "8080-tcp"
+                },
+                "wildcardPolicy": "None"
+            },
+            "status": {
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "cowbull-svc",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "cowbull",
+                    "run": "cowbull",
+                    "tier": "frontend"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ],
+                "selector": {
+                    "app": "cowbull",
+                    "tier": "frontend"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "redis-master",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "redis",
+                    "role": "master",
+                    "tier": "backend"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "protocol": "TCP",
+                        "port": 6379,
+                        "targetPort": 6379
+                    }
+                ],
+                "selector": {
+                    "app": "redis",
+                    "role": "master",
+                    "tier": "backend"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "webapp-svc",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "webapp",
+                    "run": "webapp",
+                    "tier": "webappFrontend"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080,
+                        "nodePort": 30443
+                    }
+                ],
+                "selector": {
+                    "app": "webapp",
+                    "tier": "webappFrontend"
+                },
+                "type": "LoadBalancer",
+                "sessionAffinity": "None",
+                "externalTrafficPolicy": "Cluster"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        }
+    ]
+}
