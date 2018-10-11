@@ -3,131 +3,120 @@
     "apiVersion": "v1",
     "metadata": {
         "name": "cowbull-template",
+        "creationTimestamp": null,
+        "annotations": {
+        "description": "A CowBull application template to deploy the server, web interface and data store.",
+        "iconClass": "icon-shadowman",
+        "openshift.io/display-name": "Cowbull Template"
+      }
     },
     "objects": [
       {
-        "apiVersion": "v1",
-        "data": {
-          "cowbull.cfg": "{ \n    \"LOGGING_FORMAT\": \"%(asctime)s %(levelname)s: %(message)s\", \n    \"LOGGING_LEVEL\": 10, \n    \"TEST_VALUE\": \"Hello David!\", \n    \"SAAS_REDIS_HOST\": \"redis-11039.c8.us-east-1-2.ec2.cloud.redislabs.com\", \n    \"SAAS_REDIS_PORT\": 11039, \n    \"SAAS_REDIS_DB\": 0, \n    \"REDIS_HOST\": \"redis-master\", \n    \"REDIS_PORT\": 6379, \n    \"REDIS_DB\": 0, \n    \"FLASK_HOST\": \"localhost\", \n    \"FLASK_PORT\": \"5000\", \n    \"FLASK_DEBUG\": \"false\", \n    \"GAME_VERSION\": \"v0_1\" \n}\n"
-        },
-       "kind": "ConfigMap",
-       "metadata": {
-       "name": "cowbull-config",
-      }
-    },
-      {
-            "kind": "Deployment",
-            "apiVersion": "apps/v1",
+          "apiVersion": "v1",
+          "data": {
+            "cowbull.cfg": "{ \n    \"LOGGING_FORMAT\": \"%(asctime)s %(levelname)s: %(message)s\", \n    \"LOGGING_LEVEL\": 10, \n    \"TEST_VALUE\": \"Hello David!\", \n    \"SAAS_REDIS_HOST\": \"redis-11039.c8.us-east-1-2.ec2.cloud.redislabs.com\", \n    \"SAAS_REDIS_PORT\": 11039, \n    \"SAAS_REDIS_DB\": 0, \n    \"REDIS_HOST\": \"redis-master\", \n    \"REDIS_PORT\": 6379, \n    \"REDIS_DB\": 0, \n    \"FLASK_HOST\": \"localhost\", \n    \"FLASK_PORT\": \"5000\", \n    \"FLASK_DEBUG\": \"false\", \n    \"GAME_VERSION\": \"v0_1\" \n}\n"
+          },
+         "kind": "ConfigMap",
+         "metadata": {
+         "name": "cowbull-config"
+        }
+      },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
             "metadata": {
-                "name": "cowbull-dep",
-                "generation": 3,
+                "name": "${APPLICATION_NAME}-web",
                 "creationTimestamp": null,
                 "labels": {
-                    "app": "cowbull",
-                    "run": "cowbull",
-                    "tier": "frontend"
+                    "app": "${APPLICATION_NAME}-web"
                 },
                 "annotations": {
-                    "deployment.kubernetes.io/revision": "2"
+                    "openshift.io/generated-by": "OpenShiftNewApp"
                 }
             },
             "spec": {
-                "replicas": 1,
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ],
                 "selector": {
-                    "matchLabels": {
-                        "app": "cowbull",
-                        "run": "cowbull",
-                        "tier": "frontend"
-                    }
+                    "app": "${APPLICATION_NAME}-web",
+                    "deploymentconfig": "${APPLICATION_NAME}-web"
                 },
-                "template": {
-                    "metadata": {
-                        "creationTimestamp": null,
-                        "labels": {
-                            "app": "cowbull",
-                            "run": "cowbull",
-                            "tier": "frontend"
-                        }
-                    },
-                    "spec": {
-                        "volumes": [
-                            {
-                                "name": "config-volume",
-                                "configMap": {
-                                    "name": "cowbull-config",
-                                    "items": [
-                                        {
-                                            "key": "cowbull.cfg",
-                                            "path": "cowbull.cfg"
-                                        }
-                                    ],
-                                    "defaultMode": 420
-                                }
-                            }
-                        ],
-                        "containers": [
-                            {
-                                "name": "cowbull",
-                                "image": "samueltauil/cowbull:latest",
-                                "ports": [
-                                    {
-                                        "containerPort": 8080,
-                                        "protocol": "TCP"
-                                    }
-                                ],
-                                "env": [
-                                    {
-                                        "name": "PERSISTENCE_ENGINE",
-                                        "value": "redis"
-                                    },
-                                    {
-                                        "name": "REDIS_HOST",
-                                        "value": "redis-master"
-                                    },
-                                    {
-                                        "name": "LOGGING_LEVEL",
-                                        "value": "10"
-                                    },
-                                    {
-                                        "name": "COWBULL_CONFIG",
-                                        "value": "/cowbull/config/cowbull.cfg"
-                                    }
-                                ],
-                                "resources": {
-                                    "requests": {
-                                        "cpu": "100m",
-                                        "memory": "40Mi"
-                                    }
-                                },
-                                "volumeMounts": [
-                                    {
-                                        "name": "config-volume",
-                                        "mountPath": "/cowbull/config/"
-                                    }
-                                ],
-                                "terminationMessagePath": "/dev/termination-log",
-                                "terminationMessagePolicy": "File",
-                                "imagePullPolicy": "Always"
-                            }
-                        ],
-                        "restartPolicy": "Always",
-                        "terminationGracePeriodSeconds": 30,
-                        "dnsPolicy": "ClusterFirst",
-                        "securityContext": {},
-                        "schedulerName": "default-scheduler"
-                    }
-                },
-                "strategy": {
-                    "type": "RollingUpdate",
-                    "rollingUpdate": {
-                        "maxUnavailable": 1,
-                        "maxSurge": 1
-                    }
-                },
-                "revisionHistoryLimit": 10,
-                "progressDeadlineSeconds": 600
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
             },
             "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-server",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "${APPLICATION_NAME}-server"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ],
+                "selector": {
+                    "app": "${APPLICATION_NAME}-server",
+                    "deploymentconfig": "${APPLICATION_NAME}-server"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "redis-master",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "redis",
+                    "role": "master",
+                    "tier": "backend"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "protocol": "TCP",
+                        "port": 6379,
+                        "targetPort": 6379
+                    }
+                ],
+                "selector": {
+                    "app": "redis",
+                    "role": "master",
+                    "tier": "backend"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
             }
         },
         {
@@ -207,44 +196,74 @@
             }
         },
         {
-            "kind": "Deployment",
-            "apiVersion": "apps/v1",
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
             "metadata": {
-                "name": "webapp",
+                "name": "${APPLICATION_NAME}-web",
                 "generation": 2,
                 "creationTimestamp": null,
                 "labels": {
-                    "app": "webapp",
-                    "run": "webapp",
-                    "tier": "webappFrontend"
+                    "app": "${APPLICATION_NAME}-web"
                 },
                 "annotations": {
-                    "deployment.kubernetes.io/revision": "1"
+                    "openshift.io/generated-by": "OpenShiftNewApp"
                 }
             },
             "spec": {
-                "replicas": 1,
-                "selector": {
-                    "matchLabels": {
-                        "app": "webapp",
-                        "run": "webapp",
-                        "tier": "webappFrontend"
+                "strategy": {
+                    "type": "Rolling",
+                    "rollingParams": {
+                        "updatePeriodSeconds": 1,
+                        "intervalSeconds": 1,
+                        "timeoutSeconds": 600,
+                        "maxUnavailable": "25%",
+                        "maxSurge": "25%"
+                    },
+                    "resources": {},
+                    "activeDeadlineSeconds": 21600
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}-web"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}-web:latest"
+                            },
+                            "lastTriggeredImage": ""
+                        }
                     }
+                ],
+                "replicas": 1,
+                "revisionHistoryLimit": 10,
+                "test": false,
+                "selector": {
+                    "app": "${APPLICATION_NAME}-web",
+                    "deploymentconfig": "${APPLICATION_NAME}-web"
                 },
                 "template": {
                     "metadata": {
                         "creationTimestamp": null,
                         "labels": {
-                            "app": "webapp",
-                            "run": "webapp",
-                            "tier": "webappFrontend"
+                            "app": "${APPLICATION_NAME}-web",
+                            "deploymentconfig": "${APPLICATION_NAME}-web"
+                        },
+                        "annotations": {
+                            "openshift.io/generated-by": "OpenShiftNewApp"
                         }
                     },
                     "spec": {
                         "containers": [
                             {
-                                "name": "webapp",
-                                "image": "dsanderscan/cowbull_webapp:latest",
+                                "name": "${APPLICATION_NAME}-web",
+                                "image": "dsanderscan/cowbull_webapp",
                                 "ports": [
                                     {
                                         "containerPort": 8080,
@@ -253,24 +272,19 @@
                                 ],
                                 "env": [
                                     {
-                                        "name": "LOGGING_LEVEL",
-                                        "value": "10"
+                                        "name": "COWBULL_PORT",
+                                        "value": "8080"
                                     },
                                     {
                                         "name": "COWBULL_SERVER",
-                                        "value": "cowbull-svc"
+                                        "value": "${APPLICATION_NAME}-server"
                                     },
                                     {
-                                        "name": "COWBULL_PORT",
-                                        "value": "8080"
+                                        "name": "LOGGING_LEVEL",
+                                        "value": "10"
                                     }
                                 ],
-                                "resources": {
-                                    "requests": {
-                                        "cpu": "100m",
-                                        "memory": "40Mi"
-                                    }
-                                },
+                                "resources": {},
                                 "terminationMessagePath": "/dev/termination-log",
                                 "terminationMessagePolicy": "File",
                                 "imagePullPolicy": "Always"
@@ -282,30 +296,334 @@
                         "securityContext": {},
                         "schedulerName": "default-scheduler"
                     }
-                },
-                "strategy": {
-                    "type": "RollingUpdate",
-                    "rollingUpdate": {
-                        "maxUnavailable": 1,
-                        "maxSurge": 1
-                    }
-                },
-                "revisionHistoryLimit": 10,
-                "progressDeadlineSeconds": 600
+                }
             },
             "status": {
+                "latestVersion": 0,
+                "observedGeneration": 0,
+                "replicas": 0,
+                "updatedReplicas": 0,
+                "availableReplicas": 0,
+                "unavailableReplicas": 0
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-server",
+                "generation": 4,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "${APPLICATION_NAME}-server"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Rolling",
+                    "rollingParams": {
+                        "updatePeriodSeconds": 1,
+                        "intervalSeconds": 1,
+                        "timeoutSeconds": 600,
+                        "maxUnavailable": "25%",
+                        "maxSurge": "25%"
+                    },
+                    "resources": {},
+                    "activeDeadlineSeconds": 21600
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}-server"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}-server:latest"
+                            },
+                            "lastTriggeredImage": "null"
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "revisionHistoryLimit": 10,
+                "test": false,
+                "selector": {
+                    "app": "${APPLICATION_NAME}-server",
+                    "deploymentconfig": "${APPLICATION_NAME}-server"
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "${APPLICATION_NAME}-server",
+                            "deploymentconfig": "${APPLICATION_NAME}-server"
+                        },
+                        "annotations": {
+                            "openshift.io/generated-by": "OpenShiftNewApp"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "cowbull-config",
+                                "configMap": {
+                                    "name": "cowbull-config",
+                                    "defaultMode": 420
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "${APPLICATION_NAME}-server",
+                                "image": "${APPLICATION_NAME}-server:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "COWBULL_CONFIG",
+                                        "value": "${COWBULLSERVER_CONFIG_PATH}"
+                                    },
+                                    {
+                                        "name": "LOGGING_LEVEL",
+                                        "value": "10"
+                                    },
+                                    {
+                                        "name": "PERSISTENCE_ENGINE",
+                                        "value": "${COWBULLSERVER_PERSISTENCE_ENGINE}"
+                                    },
+                                    {
+                                        "name": "REDIS_HOST",
+                                        "value": "redis-master"
+                                    }
+                                ],
+                                "resources": {},
+                                "volumeMounts": [
+                                    {
+                                        "name": "cowbull-config",
+                                        "mountPath": "/cowbull/config"
+                                    }
+                                ],
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File",
+                                "imagePullPolicy": "Always"
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {},
+                        "schedulerName": "default-scheduler"
+                    }
+                }
+            },
+            "status": {
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-server",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "${APPLICATION_NAME}-server"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "GitHub",
+                        "github": {
+                            "secret": "${GITHUB_WEBHOOK_SECRET}"
+                        }
+                    },
+                    {
+                        "type": "Generic",
+                        "generic": {
+                            "secret": "${GENERIC_WEBHOOK_SECRET}"
+                        }
+                    },
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChange": {}
+                    }
+                ],
+                "runPolicy": "Serial",
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "https://github.com/samueltauil/python_cowbull_server"
+                    }
+                },
+                "strategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
+                        "from": {
+                            "kind": "ImageStreamTag",
+                            "name": "python:3.5.3-slim"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}-server:latest"
+                    }
+                },
+                "resources": {},
+                "postCommit": {},
+                "nodeSelector": null,
+                "successfulBuildsHistoryLimit": 5,
+                "failedBuildsHistoryLimit": 5
+            },
+            "status": {
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-web",
+                "generation": 2,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "${APPLICATION_NAME}-web"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": false
+                },
+                "tags": [
+                    {
+                        "name": "latest",
+                        "annotations": {
+                            "openshift.io/imported-from": "dsanderscan/cowbull_webapp"
+                        },
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "dsanderscan/cowbull_webapp:latest"
+                        },
+                        "generation": 2,
+                        "importPolicy": {},
+                        "referencePolicy": {
+                            "type": "Source"
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "python",
+                "generation": 2,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "${APPLICATION_NAME}-server"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": false
+                },
+                "tags": [
+                    {
+                        "name": "3.5.3-slim",
+                        "annotations": {
+                            "openshift.io/imported-from": "python:3.5.3-slim"
+                        },
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "python:3.5.3-slim"
+                        },
+                        "generation": 2,
+                        "importPolicy": {},
+                        "referencePolicy": {
+                            "type": "Source"
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-server",
+                "generation": 1,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "${APPLICATION_NAME}-server"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": false
+                },
+                "tags": [
+                    {
+                        "name": "latest",
+                        "annotations": null,
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "${APPLICATION_NAME}-server:latest"
+                        },
+                        "generation": null,
+                        "importPolicy": {},
+                        "referencePolicy": {
+                            "type": ""
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
             }
         },
         {
             "kind": "Route",
             "apiVersion": "v1",
             "metadata": {
-                "name": "webapp-svc",
+                "name": "${APPLICATION_NAME}-web",
                 "creationTimestamp": null,
                 "labels": {
-                    "app": "webapp",
-                    "run": "webapp",
-                    "tier": "webappFrontend"
+                    "app": "${APPLICATION_NAME}-web"
                 },
                 "annotations": {
                     "openshift.io/host.generated": "true"
@@ -314,7 +632,7 @@
             "spec": {
                 "to": {
                     "kind": "Service",
-                    "name": "webapp-svc",
+                    "name": "${APPLICATION_NAME}-web",
                     "weight": 100
                 },
                 "port": {
@@ -324,103 +642,46 @@
             },
             "status": {
             }
-        },
-        {
-            "kind": "Service",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "cowbull-svc",
-                "creationTimestamp": null,
-                "labels": {
-                    "app": "cowbull",
-                    "run": "cowbull",
-                    "tier": "frontend"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "8080-tcp",
-                        "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
-                    }
-                ],
-                "selector": {
-                    "app": "cowbull",
-                    "tier": "frontend"
-                },
-                "type": "ClusterIP",
-                "sessionAffinity": "None"
-            },
-            "status": {
-                "loadBalancer": {}
-            }
-        },
-        {
-            "kind": "Service",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "redis-master",
-                "creationTimestamp": null,
-                "labels": {
-                    "app": "redis",
-                    "role": "master",
-                    "tier": "backend"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "protocol": "TCP",
-                        "port": 6379,
-                        "targetPort": 6379
-                    }
-                ],
-                "selector": {
-                    "app": "redis",
-                    "role": "master",
-                    "tier": "backend"
-                },
-                "type": "ClusterIP",
-                "sessionAffinity": "None"
-            },
-            "status": {
-                "loadBalancer": {}
-            }
-        },
-        {
-            "kind": "Service",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "webapp-svc",
-                "creationTimestamp": null,
-                "labels": {
-                    "app": "webapp",
-                    "run": "webapp",
-                    "tier": "webappFrontend"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "8080-tcp",
-                        "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
-                    }
-                ],
-                "selector": {
-                    "app": "webapp",
-                    "tier": "webappFrontend"
-                },
-                "type": "LoadBalancer",
-                "sessionAffinity": "None",
-                "externalTrafficPolicy": "Cluster"
-            },
-            "status": {
-                "loadBalancer": {}
-            }
         }
-    ]
+    ],
+
+    "parameters": [
+        {
+            "description": "The name for the application.",
+            "displayName": "Application Name",
+            "name": "APPLICATION_NAME",
+            "required": true,
+            "value": "cowbull"
+        },
+        {
+            "description": "GitHub trigger secret",
+            "displayName": "Github Webhook Secret",
+            "from": "[a-zA-Z0-9]{8}",
+            "generate": "expression",
+            "name": "GITHUB_WEBHOOK_SECRET",
+            "required": true
+        },
+        {
+            "description": "Generic build trigger secret",
+            "displayName": "Generic Webhook Secret",
+            "from": "[a-zA-Z0-9]{8}",
+            "generate": "expression",
+            "name": "GENERIC_WEBHOOK_SECRET",
+            "required": true
+        },
+        {
+          "description": "CowBull Server configurantion file path.",
+          "displayName": "Server Config File Path",
+          "name": "COWBULLSERVER_CONFIG_PATH",
+          "required": true,
+          "value": "/cowbull/config/cowbull.cfg"
+        },
+        {
+          "description": "CowBull Server persistence engine.",
+          "displayName": "Persistence Engine",
+          "name": "COWBULLSERVER_PERSISTENCE_ENGINE",
+          "required": true,
+          "value": "redis"
+        }
+      ]
 }
