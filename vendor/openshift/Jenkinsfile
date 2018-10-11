@@ -1,9 +1,5 @@
 node {
 
-    agent {
-      label 'docker' 
-    }
-
     def app
 
     stage('Clone repository') {
@@ -16,7 +12,7 @@ node {
         /* This builds the actual image; synonymous to
          * docker build on the command line */
 
-        app = docker.build("samueltauil/cowbull")
+        app = docker.build("samueltauil/cowbull", "./vendor/docker")
     }
 
     stage('Test image') {
