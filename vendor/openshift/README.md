@@ -17,6 +17,12 @@ From here you can choose which way to go.
 
 #### Deploying manually all components
 
+Let's create a project first.
+
+```
+oc new-project cowbull-dev
+```
+
 Create the ConfigMap to store the cowbull config file.
 
 ```
@@ -47,10 +53,38 @@ oc new-app dsanderscan/cowbull_webapp LOGGING_LEVEL=10 COWBULL_SERVER=pythoncowb
 
 #### Deploying using the Template
 
-Make sure you are in the `python_cowbull_server` directory, then leté process the template and pass the objects for creation in the API.
+Make sure you are in the `python_cowbull_server` directory, then let's process the template to create the resources we need.
 
 ```
-oc process -f cowbull_template.json | oc create -f -
+oc process -f vendor/openshift/cowbull_template.json | oc create -f -
 ```
 
 Second option would be importing the template directly from the OpenShift web console and selecting it from the catalog.
+
+### Extending to use the Jenkins Pipeline
+
+Lets create the pipeline which will trigger a Jenkins instance deployment within the project.
+
+```
+oc create -f vendor/openshift/cowbull_buildconfig_pipeline.yml
+```
+
+Make sure you create a QA project called `cowbull-qa`.
+
+```
+oc new-project cowbull-qa
+```
+
+Then let's give the jenkins service account in the `cowbull-dev` project access and permission to create resources in the `cowbull-qa` project.
+
+```
+oc policy add-role-to-user edit system:serviceaccount:cowbull-dev:jenkins -n cowbull-qa
+```
+
+Now we will give the `image-puller` role to the serviceaccounts for the `cowbull-qa` into the `cowbull-dev` project.
+
+```
+oc policy add-role-to-group system:image-puller system:serviceaccounts:cowbull-qa -n cowbull-dev
+```
+
+Now just go to *Builds -> Pipelines* and click start.
