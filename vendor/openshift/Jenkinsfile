@@ -19,10 +19,6 @@ pipeline {
 
       stage ('Promote to QA') {
       steps{
-        mail (
-            to: 'samueltauil@gmail.com',
-            subject: "CowBull Server (${env.BUILD_NUMBER}) is awaiting promotion",
-             body: "Please go to ${env.BUILD_URL}.");
         input "Do you want to promote to QA ?"
         }
       }
