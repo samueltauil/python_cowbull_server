@@ -4,12 +4,14 @@ pipeline {
     stages {
 
       stage('Build - Dev') {
+      script{
         openshift.withCluster() {
           openshift.withProject("cowbull-dev") {
              def cbbc = openshift.selector('bc',"cowbull-server")
              def buildSelector = cbbc.startBuild()
              buildSelector.logs('-f')
           }
+        }
        }
       }
 
@@ -22,12 +24,14 @@ pipeline {
       }
 
       stage ('Deploy - QA') {
+      script{
          openshift.withCluster() {
             openshift.withProject("cowbull-dev") {
                openshift.tag("cowbull-dev/cowbull-server:latest", "cowbull-dev/cowbull-server:promote-qa")
                openshift.newApp("cowbull-dev/cowbull-server:promote-qa")
             }
          }
+        }
       }
     }
 }
