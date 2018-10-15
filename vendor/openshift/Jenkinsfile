@@ -4,6 +4,7 @@ pipeline {
     stages {
 
       stage('Build - Dev') {
+      steps{
       script{
         openshift.withCluster() {
           openshift.withProject("cowbull-dev") {
@@ -12,6 +13,7 @@ pipeline {
              buildSelector.logs('-f')
           }
         }
+       }
        }
       }
 
@@ -24,6 +26,7 @@ pipeline {
       }
 
       stage ('Deploy - QA') {
+      steps{
       script{
          openshift.withCluster() {
             openshift.withProject("cowbull-dev") {
@@ -31,6 +34,7 @@ pipeline {
                openshift.newApp("cowbull-dev/cowbull-server:promote-qa")
             }
          }
+        }
         }
       }
     }
