@@ -27,7 +27,7 @@ pipeline {
       steps{
       script{
          openshift.withCluster() {
-            openshift.withProject("cowbull-dev") {
+            openshift.withProject("cowbull-qa") {
                openshift.tag("cowbull-dev/cowbull-server:latest", "cowbull-dev/cowbull-server:promote-qa")
                openshift.newApp("cowbull-dev/cowbull-server:promote-qa")
             }
