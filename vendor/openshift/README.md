@@ -13,15 +13,16 @@ git clone https://github.com/samueltauil/python_cowbull_server
 ```
 cd python_cowbull_server
 ```
-From here you can choose which way to go.
-
-#### Deploying manually all components
 
 Let's create a project first.
 
 ```
 oc new-project cowbull-dev
 ```
+
+From here you can choose which way to go.
+
+#### Deploying manually all components
 
 Create the ConfigMap to store the cowbull config file.
 
